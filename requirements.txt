@@ -1,0 +1,30 @@
+
+# YouTube API and configuration
+google-api-python-client
+python-dotenv
+isodate
+
+# Data processing
+pandas
+numpy
+scikit-learn
+
+# Ranking
+lightgbm
+
+# NLP and deep learning
+torch
+transformers
+datasets
+sentence-transformers
+emoji
+
+# Backend and agent
+fastapi
+uvicorn
+pydantic
+langgraph
+
+# Testing and quality
+pytest
+ruff

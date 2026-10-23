@@ -1,0 +1,23 @@
+
+# Secrets
+.env
+
+# Python environment
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Testing and formatting
+.pytest_cache/
+.ruff_cache/
+
+# Raw API cache and trained models
+data/raw/*
+models/*
+!data/raw/.gitkeep
+!models/.gitkeep
+
+# Notebooks and OS files
+.ipynb_checkpoints/
+.DS_Store
