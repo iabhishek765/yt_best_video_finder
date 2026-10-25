@@ -61,3 +61,99 @@ def test_cache_is_stored_in_sqlite(tmp_path):
 
     assert row[0] == "test"
     assert json.loads(row[1]) == videos
+
+
+def test_collect_videos_reuses_cache(monkeypatch, tmp_path):
+    collector = make_collector(tmp_path)
+
+    calls = {"search": 0, "details": 0}
+
+    def fake_search(query, max_results):
+        calls["search"] += 1
+        return [
+            {
+                "video_id": "abc123",
+                "original_rank": 1,
+                "search_title": "Intro to Python",
+            }
+        ]
+
+    def fake_details(video_ids):
+        calls["details"] += 1
+        return {
+            "abc123": {
+                "id": "abc123",
+                "snippet": {
+                    "title": "Intro to Python",
+                    "description": "A Python tutorial",
+                    "channelId": "channel123",
+                    "channelTitle": "Example Channel",
+                    "publishedAt": "2025-01-01T00:00:00Z",
+                },
+                "statistics": {
+                    "viewCount": "100",
+                },
+                "contentDetails": {
+                    "duration": "PT10M",
+                },
+            }
+        }
+
+    monkeypatch.setattr(
+        collector, "_search_video_ids", fake_search
+    )
+    monkeypatch.setattr(
+        collector, "_get_video_details", fake_details
+    )
+
+    first = collector.collect_videos("python tutorial", max_results=1)
+    second = collector.collect_videos("python tutorial", max_results=1)
+
+    assert first == second
+    assert len(first) == 1
+    assert calls == {"search": 1, "details": 1}
+
+
+def test_missing_optional_metadata_is_preserved(monkeypatch, tmp_path):
+    collector = make_collector(tmp_path)
+
+    monkeypatch.setattr(
+        collector,
+        "_search_video_ids",
+        lambda query, max_results: [
+            {
+                "video_id": "abc123",
+                "original_rank": 1,
+                "search_title": "Intro to Python",
+            }
+        ],
+    )
+
+    monkeypatch.setattr(
+        collector,
+        "_get_video_details",
+        lambda video_ids: {
+            "abc123": {
+                "id": "abc123",
+                "snippet": {
+                    "title": "Intro to Python",
+                    "description": "",
+                    "channelId": "channel123",
+                    "channelTitle": "Example Channel",
+                    "publishedAt": "2025-01-01T00:00:00Z",
+                },
+                "statistics": {},
+                "contentDetails": {},
+            }
+        },
+    )
+
+    videos = collector.collect_videos(
+        "python tutorial", max_results=1
+    )
+
+    assert len(videos) == 1
+    assert videos[0]["view_count"] is None
+    assert videos[0]["like_count"] is None
+    assert videos[0]["comment_count"] is None
+    assert videos[0]["duration"] is None
