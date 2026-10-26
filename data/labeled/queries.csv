@@ -1,0 +1,41 @@
+query_id,query,intent,language
+Q001,dal makhani recipe,recipe,English
+Q002,paneer butter masala recipe,recipe,English
+Q003,easy chocolate cake recipe,recipe,English
+Q004,how to make soft chapati,recipe,English
+Q005,high protein vegetarian breakfast,recipe,English
+Q006,quick dinner recipes for students,recipe,English
+Q007,masala dosa recipe at home,recipe,English
+Q008,learn pandas for beginners,coding_tutorial,English
+Q009,Python OOP explained,coding_tutorial,English
+Q010,React hooks tutorial,coding_tutorial,English
+Q011,SQL joins explained,coding_tutorial,English
+Q012,Git and GitHub for beginners,coding_tutorial,English
+Q013,FastAPI tutorial for beginners,coding_tutorial,English
+Q014,NumPy and pandas project tutorial,coding_tutorial,English
+Q015,scikit-learn machine learning tutorial,coding_tutorial,English
+Q016,build a machine learning project in Python,coding_tutorial,English
+Q017,operating system deadlock explained,exam_lecture,English
+Q018,linear regression explained,exam_lecture,English
+Q019,GATE DBMS normalization,exam_lecture,English
+Q020,computer networks TCP vs UDP,exam_lecture,English
+Q021,process scheduling algorithms explained,exam_lecture,English
+Q022,probability for machine learning,exam_lecture,English
+Q023,SQL transactions and ACID properties,exam_lecture,English
+Q024,best budget laptop for students,product_review,English
+Q025,earbuds under 2000 review,product_review,English
+Q026,best wired headphones under 3000,product_review,English
+Q027,budget mechanical keyboard review,product_review,English
+Q028,best student laptop for coding,product_review,English
+Q029,beginner home workout,fitness,English
+Q030,how to improve posture exercises,fitness,English
+Q031,full body workout without equipment,fitness,English
+Q032,beginner running tips,fitness,English
+Q033,healthy high protein vegetarian diet,fitness,English
+Q034,resume kaise banaye,general_hinglish,Hinglish
+Q035,English speaking practice for beginners,general,English
+Q036,time management tips for students,general,English
+Q037,Python programming kaise sikhe,general_hinglish,Hinglish
+Q038,interview mein confidence kaise badhaye,general_hinglish,Hinglish
+Q039,AI aur machine learning mein difference,general_hinglish,Hinglish
+Q040,how to study effectively for exams,general,English

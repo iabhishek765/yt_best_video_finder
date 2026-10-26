@@ -1,13 +1,11 @@
-
 import json
 import os
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "raw" / "youtube_cache.db"
@@ -73,15 +71,13 @@ class YouTubeCollector:
             return None
 
         fetched_at = datetime.fromisoformat(row[0])
-        if datetime.now(timezone.utc) - fetched_at > timedelta(
-            hours=CACHE_HOURS
-        ):
+        if datetime.now(UTC) - fetched_at > timedelta(hours=CACHE_HOURS):
             return None
 
         return json.loads(row[1])
 
     def _write_cache(self, query_key, query, videos):
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         payload = json.dumps(videos, ensure_ascii=False)
 
         with self._connect() as conn:
@@ -105,14 +101,18 @@ class YouTubeCollector:
         while len(video_ids) < max_results:
             page_size = min(50, max_results - len(video_ids))
 
-            response = self.youtube.search().list(
-                part="snippet",
-                q=query,
-                type="video",
-                maxResults=page_size,
-                pageToken=next_page_token,
-                order="relevance",
-            ).execute()
+            response = (
+                self.youtube.search()
+                .list(
+                    part="snippet",
+                    q=query,
+                    type="video",
+                    maxResults=page_size,
+                    pageToken=next_page_token,
+                    order="relevance",
+                )
+                .execute()
+            )
 
             for item in response.get("items", []):
                 video_id = item.get("id", {}).get("videoId")
@@ -138,11 +138,15 @@ class YouTubeCollector:
         for start in range(0, len(video_ids), 50):
             batch = video_ids[start : start + 50]
 
-            response = self.youtube.videos().list(
-                part="snippet,statistics,contentDetails",
-                id=",".join(batch),
-                maxResults=len(batch),
-            ).execute()
+            response = (
+                self.youtube.videos()
+                .list(
+                    part="snippet,statistics,contentDetails",
+                    id=",".join(batch),
+                    maxResults=len(batch),
+                )
+                .execute()
+            )
 
             for item in response.get("items", []):
                 details[item["id"]] = item
@@ -154,7 +158,7 @@ class YouTubeCollector:
             raise ValueError("Query must be a non-empty string.")
 
         if not isinstance(max_results, int) or isinstance(max_results, bool):
-            raise ValueError("max_results must be an integer from 1 to 100.")
+            raise TypeError("max_results must be an integer.")
 
         if not 1 <= max_results <= 100:
             raise ValueError("max_results must be between 1 and 100.")
@@ -171,7 +175,7 @@ class YouTubeCollector:
         ids = [candidate["video_id"] for candidate in candidates]
         details = self._get_video_details(ids) if ids else {}
 
-        collected_at = datetime.now(timezone.utc).isoformat()
+        collected_at = datetime.now(UTC).isoformat()
         videos = []
 
         for candidate in candidates:
@@ -201,9 +205,7 @@ class YouTubeCollector:
                     "view_count": statistics.get("viewCount"),
                     "like_count": statistics.get("likeCount"),
                     "comment_count": statistics.get("commentCount"),
-                    "video_url": (
-                        f"https://www.youtube.com/watch?v={video_id}"
-                    ),
+                    "video_url": (f"https://www.youtube.com/watch?v={video_id}"),
                 }
             )
 

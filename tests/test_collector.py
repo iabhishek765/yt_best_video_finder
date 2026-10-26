@@ -1,11 +1,10 @@
-
 import json
 import sqlite3
-from datetime import datetime, timezone
 
 import pytest
 
 from src.collector import YouTubeCollector
+from datetime import datetime, timedelta, timezone
 
 
 def make_collector(tmp_path):
@@ -99,12 +98,8 @@ def test_collect_videos_reuses_cache(monkeypatch, tmp_path):
             }
         }
 
-    monkeypatch.setattr(
-        collector, "_search_video_ids", fake_search
-    )
-    monkeypatch.setattr(
-        collector, "_get_video_details", fake_details
-    )
+    monkeypatch.setattr(collector, "_search_video_ids", fake_search)
+    monkeypatch.setattr(collector, "_get_video_details", fake_details)
 
     first = collector.collect_videos("python tutorial", max_results=1)
     second = collector.collect_videos("python tutorial", max_results=1)
@@ -148,12 +143,36 @@ def test_missing_optional_metadata_is_preserved(monkeypatch, tmp_path):
         },
     )
 
-    videos = collector.collect_videos(
-        "python tutorial", max_results=1
-    )
+    videos = collector.collect_videos("python tutorial", max_results=1)
 
     assert len(videos) == 1
     assert videos[0]["view_count"] is None
     assert videos[0]["like_count"] is None
     assert videos[0]["comment_count"] is None
     assert videos[0]["duration"] is None
+
+
+def test_expired_cache_is_not_reused(tmp_path):
+    collector = make_collector(tmp_path)
+
+    query_key = "machine learning|1"
+    query = "machine learning"
+    videos = [{"video_id": "abc123"}]
+
+    collector._write_cache(query_key, query, videos)
+
+    expired_time = (
+        datetime.now(timezone.utc) - timedelta(hours=25)
+    ).isoformat()
+
+    with sqlite3.connect(collector.db_path) as conn:
+        conn.execute(
+            """
+            UPDATE query_cache
+            SET fetched_at = ?
+            WHERE query_key = ?
+            """,
+            (expired_time, query_key),
+        )
+
+    assert collector._read_cache(query_key) is None
