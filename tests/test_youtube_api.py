@@ -1,4 +1,3 @@
-
 import os
 
 from dotenv import load_dotenv
@@ -10,9 +9,7 @@ def main():
 
     api_key = os.getenv("YT_API_KEY")
     if not api_key or api_key == "paste_your_actual_key_here":
-        raise RuntimeError(
-            "Set your real YT_API_KEY in the project-root .env file."
-        )
+        raise RuntimeError("Set your real YT_API_KEY in the project-root .env file.")
 
     youtube = build(
         "youtube",
@@ -20,12 +17,16 @@ def main():
         developerKey=api_key,
     )
 
-    response = youtube.search().list(
-        part="snippet",
-        q="learn pandas for beginners",
-        type="video",
-        maxResults=1,
-    ).execute()
+    response = (
+        youtube.search()
+        .list(
+            part="snippet",
+            q="learn pandas for beginners",
+            type="video",
+            maxResults=1,
+        )
+        .execute()
+    )
 
     items = response.get("items", [])
     if not items:

@@ -96,38 +96,53 @@ class YouTubeCollector:
 
     def _search_video_ids(self, query, max_results):
         video_ids = []
+        seen_video_ids = set()
         next_page_token = None
+        search_position = 0
+
 
         while len(video_ids) < max_results:
             page_size = min(50, max_results - len(video_ids))
 
-            response = (
-                self.youtube.search()
-                .list(
-                    part="snippet",
-                    q=query,
-                    type="video",
-                    maxResults=page_size,
-                    pageToken=next_page_token,
-                    order="relevance",
-                )
-                .execute()
+            request = self.youtube.search().list(
+                part="snippet",
+                q=query,
+                type="video",
+                maxResults=page_size,
+                pageToken=next_page_token,
+                order="relevance",
+
             )
 
+            response = request.execute()
+
             for item in response.get("items", []):
+                search_position += 1
+
                 video_id = item.get("id", {}).get("videoId")
-                if video_id:
-                    video_ids.append(
-                        {
-                            "video_id": video_id,
-                            "original_rank": len(video_ids) + 1,
-                            "search_title": item["snippet"]["title"],
-                        }
-                    )
+                if not video_id or video_id in seen_video_ids:
+                    continue
+
+                seen_video_ids.add(video_id)
+
+                video_ids.append(
+                    {
+                        "video_id": video_id,
+                        "original_rank": search_position,
+                        "search_title": item.get("snippet", {}).get(
+                        "title", ""
+                        ),
+                    }
+                )
+
+                if len(video_ids) >= max_results:
+                    break
 
             next_page_token = response.get("nextPageToken")
             if not next_page_token:
                 break
+
+
 
         return video_ids
 

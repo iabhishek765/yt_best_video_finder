@@ -176,3 +176,78 @@ def test_expired_cache_is_not_reused(tmp_path):
         )
 
     assert collector._read_cache(query_key) is None
+
+
+def test_search_video_ids_deduplicates_and_preserves_original_rank(
+    tmp_path, monkeypatch
+):
+    collector = YouTubeCollector.__new__(YouTubeCollector)
+
+
+    class FakeRequest:
+        def __init__(self, response):
+            self.response = response
+
+        def execute(self):
+            return self.response
+
+    class FakeSearch:
+        def __init__(self):
+            self.calls = 0
+
+        def list(self, **kwargs):
+            self.calls += 1
+
+            if self.calls == 1:
+                return FakeRequest(
+                    {
+                        "items": [
+                            {
+                                "id": {"videoId": "video_A"},
+                                "snippet": {"title": "Video A"},
+                            },
+                            {
+                                "id": {"videoId": "video_B"},
+                                "snippet": {"title": "Video B"},
+                            },
+                            {
+                                "id": {"videoId": "video_A"},
+                                "snippet": {"title": "Video A duplicate"},
+                            },
+                        ],
+                        "nextPageToken": "page2",
+                    }
+                )
+
+            return FakeRequest(
+                {
+                    "items": [
+                        {
+                            "id": {"videoId": "video_C"},
+                            "snippet": {"title": "Video C"},
+                        }
+                    ]
+                }
+            )
+
+    fake_search = FakeSearch()
+
+    class FakeYouTube:
+        def search(self):
+            return fake_search
+
+    collector.youtube = FakeYouTube()
+
+
+
+
+
+    results = collector._search_video_ids("test query", 3)
+
+    assert [item["video_id"] for item in results] == [
+        "video_A",
+        "video_B",
+        "video_C",
+    ]
+    assert [item["original_rank"] for item in results] == [1, 2, 4]
+    assert fake_search.calls == 2
